@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta de Eliminação - Painel de Controle</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3d59;
+            --secondary: #ff6e40;
+            --accent: #ffc300;
+            --success: #5cb85c;
+            --danger: #d9534f;
+            --dark: #0b1a2b;
+            --light: #f5f5f5;
+            --gray: #334e68;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, #0b1a2b 100%);
+            color: var(--light);
+            padding: 20px;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            color: var(--accent);
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 195, 0, 0.3);
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            color: var(--light);
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+        
+        .roleta-container {
+            position: relative;
+            width: 100%;
+            padding: 40px 30px;
+            border-radius: 20px;
+            background: rgba(51, 78, 104, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 110, 64, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        
+        .roleta-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+        }
+        
+        .contador-diario {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success);
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: rgba(11, 26, 43, 0.7);
+            border-radius: 10px;
+            border: 1px solid rgba(92, 184, 92, 0.3);
+            display: inline-block;
+        }
+        
+        .nome-display-container {
+            position: relative;
+            margin: 30px 0;
+            padding: 30px 20px;
+            background: rgba(11, 26, 43, 0.8);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 110, 64, 0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .nome-display-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 110, 64, 0.05) 50%, transparent 70%);
+            animation: shine 3s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        #nome-display {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--light);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+        
+        #nome-display.spinning {
+            animation: pulse 0.1s infinite alternate, colorShift 0.5s infinite alternate;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1.0); }
+            to { transform: scale(1.05); }
+        }
+        
+        @keyframes colorShift {
+            0% { color: var(--light); }
+            25% { color: var(--accent); }
+            50% { color: var(--secondary); }
+            75% { color: var(--success); }
+            100% { color: var(--light); }
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 18px 30px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+        
+        .btn:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            box-shadow: 0 6px 0 #555;
+            opacity: 0.7;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success) 0%, #4cae4c 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--accent) 0%, #d1a100 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #c9302c 100%);
+            color: white;
+        }
+        
+        .btn-special {
+            background: linear-gradient(135deg, #a040d9 0%, #8c35b5 100%);
+            color: white;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        .status {
+            margin-top: 25px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 10px 15px;
+            background: rgba(11, 26, 43, 0.5);
+            border-radius: 8px;
+            width: 100%;
+        }
+        
+        .footer {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .footer-note {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            #nome-display {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                padding: 15px 20px;
+                font-size: 1.1rem;
+            }
+            
+            .roleta-container {
+                padding: 30px 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            #nome-display {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+            
+            .roleta-container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Roleta de Eliminação</h1>
+            <p>10 participantes por dia</p>
+        </div>
+        
+        <div class="roleta-container">
+            <div class="contador-diario" id="contador-diario"></div>
+            
+            <div class="nome-display-container">
+                <div id="nome-display">CARREGANDO...</div>
+            </div>
+            
+            <div class="controls">
+                <button id="btn-girar" class="btn btn-primary" disabled>
+                    <span class="btn-text">Aguarde o Carregamento</span>
+                </button>
+                
+                <div class="status" id="status"></div>
+                
+                <a href="eliminados.html" target="_blank" style="width: 100%;">
+                    <button class="btn btn-secondary" style="width: 100%;">
+                        <span class="btn-text">Ver Lista Pública de Eliminados</span>
+                    </button>
+                </a>
+                
+                <button id="btn-limpar-diario" class="btn btn-special">
+                    <span class="btn-text">Encerrar Dia e Limpar Contagem</span>
+                </button>
+            </div>
+            
+            <div class="footer">
+                <p class="footer-note">
+                    Para reiniciar o jogo (base completa), clique 3x no botão vermelho.
+                </p>
+                
+                <button id="btn-reset" class="btn btn-danger">
+                    <span class="btn-text">Reiniciar Base Total</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =================================================================
+        // 1. CONFIGURAÇÕES E VARIÁVEIS
+        // =================================================================
+        const LIMITE_DIARIO = 10; 
+
+        // *****************************************************************
+        // 🚨 SUBSTITUA PELA URL COMPLETA DE DEPLOYMENT DO SEU APPS SCRIPT! 🚨
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbxcBukg9fOEQQ4uptEm_rk_0irZm7y3n1GfvTt2pUxgt3Rth8Fs01d4vtGAD0jsqJGc/exec'; 
+        // *****************************************************************
+
+        // Mantemos apenas a contagem diária no Local Storage
+        const STORAGE_KEY_ELIMINADOS_DIA = 'roleta_eliminados_do_dia_com_data'; 
+
+        const URL_GIRO = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/spin.mp3'; 
+        const URL_PARADA = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; 
+        const audioGiro = new Audio(URL_GIRO); audioGiro.loop = true; audioGiro.volume = 0.3; 
+        const audioVitoria = new Audio(URL_PARADA); audioVitoria.volume = 0.6;
+        
+        const displayNome = document.getElementById('nome-display');
+        const btnGirar = document.getElementById('btn-girar');
+        const btnReset = document.getElementById('btn-reset');
+        const contadorDiarioElement = document.getElementById('contador-diario');
+        const btnLimparDiario = document.getElementById('btn-limpar-diario');
+        const statusElement = document.getElementById('status'); 
+
+        let nomesRestantes = []; // Lista de nomes ATUALIZADA pelo Sheets
+        let nomesEliminadosDoDia = []; 
+        let nomesEliminadosPublico = []; 
+        let isSpinning = false;
+        
+        // =================================================================
+        // 2. FUNÇÕES DE COMUNICAÇÃO (API)
+        // =================================================================
+        
+        // Função genérica para chamar a API
+        async function callApi(params, method = 'GET', data = null) {
+            const url = new URL(SHEETS_API_URL);
+            for (let key in params) {
+                url.searchParams.append(key, params[key]);
+            }
+
+            const options = {
+                method: method,
+                mode: 'cors', // Essencial para comunicação externa
+                headers: { 'Content-Type': 'text/plain' } // Apps Script prefere 'text/plain' para POST/JSON
+            };
+
+            if (data && method === 'POST') {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`Erro de rede: ${response.statusText}`);
+                }
+                const jsonResponse = await response.json();
+                
+                if (jsonResponse.status === 200) {
+                    return jsonResponse.data;
+                } else {
+                    console.error("Erro da API:", jsonResponse.message);
+                    throw new Error(jsonResponse.message);
+                }
+            } catch (error) {
+                console.error("Falha na comunicação com Sheets API:", error);
+                statusElement.textContent = `🚨 ERRO DE CONEXÃO: ${error.message}`;
+                return null;
+            }
+        }
+
+        // =================================================================
+        // 3. FUNÇÕES DE DADOS E ESTADO (APENAS LOCAL)
+        // =================================================================
+        
+        // Esta função salva apenas a lista diária (Local Storage)
+        function salvarEliminadosDia() {
+            localStorage.setItem(STORAGE_KEY_ELIMINADOS_DIA, JSON.stringify(nomesEliminadosDoDia));
+        }
+
+        function formatarData(dataISO) {
+            if (!dataISO) return 'N/A';
+            // Tenta formatar a data que vem do Sheets (pode ser objeto Date ou string)
+            try {
+                const date = new Date(dataISO);
+                return date.toLocaleDateString('pt-BR');
+            } catch (e) {
+                return dataISO.substring(0, 10); // Se for string YYYY-MM-DD
+            }
+        }
+
+        // NOVO: Carrega a lista restante e o histórico do Sheets
+        async function carregarBase() {
+            audioGiro.load();
+            audioVitoria.load();
+            btnGirar.disabled = true;
+            displayNome.textContent = "CARREGANDO DADOS DO GOOGLE SHEETS...";
+
+            // 1. Carrega Nomes Restantes (Planilha: NomesRestantes)
+            const nomesDoSheets = await callApi({ action: 'carregarNomes' });
+            if (nomesDoSheets) {
+                nomesRestantes = nomesDoSheets;
+                displayNome.textContent = nomesRestantes.length === 0 ? "LISTA ZERADA" : "PRONTO PARA GIRAR!";
+            } else {
+                displayNome.textContent = "ERRO DE CARREGAMENTO";
+                return; // Para a execução se falhar
+            }
+            
+            // 2. Carrega lista de eliminados do dia (do localStorage)
+            const savedEliminadosDia = localStorage.getItem(STORAGE_KEY_ELIMINADOS_DIA);
+            if (savedEliminadosDia) {
+                nomesEliminadosDoDia = JSON.parse(savedEliminadosDia);
+            }
+
+            // 3. Carrega o Histórico Público (Planilha: Eliminados)
+            const historicoSheets = await callApi({ action: 'carregarEliminados' });
+            if (historicoSheets) {
+                nomesEliminadosPublico = historicoSheets;
+            } else {
+                nomesEliminadosPublico = [];
+            }
+
+            // Atualizações finais
+            atualizarStatus();
+            checarLimiteDiario();
+        }
+
+        function atualizarStatus() {
+            const total = nomesRestantes.length;
+            const totalEliminados = nomesEliminadosPublico.length; 
+            statusElement.textContent = `Nomes restantes: ${total.toLocaleString('pt-BR')} | Total eliminados (Planilha): ${totalEliminados.toLocaleString('pt-BR')}`;
+            
+            if (total === 0) {
+                btnGirar.textContent = "ROLETAS ZERADA!";
+            }
+        }
+        
+        function checarLimiteDiario() {
+            const eliminadosHoje = nomesEliminadosDoDia.length;
+            const restante = LIMITE_DIARIO - eliminadosHoje;
+            
+            contadorDiarioElement.innerHTML = `
+                Eliminados hoje: <span style="color: var(--accent)">${eliminadosHoje}</span> de <span style="color: var(--success)">${LIMITE_DIARIO}</span>
+            `;
+
+            if (restante <= 0) {
+                btnGirar.disabled = true;
+                btnGirar.innerHTML = '<span class="btn-text">LIMITE DIÁRIO ATINGIDO! (10/Dia)</span>';
+            } else if (nomesRestantes.length > 0) {
+                btnGirar.disabled = false;
+                btnGirar.innerHTML = `<span class="btn-text">GIRAR (${restante} RESTANTES)</span>`;
+            }
+            btnLimparDiario.disabled = eliminadosHoje === 0;
+        }
+
+        let resetCounter = 0;
+        async function tentarResetar() {
+            resetCounter++;
+            if (resetCounter < 3) {
+                alert(`AVISO: Clique mais ${3 - resetCounter} vez(es) no botão para CONFIRMAR a perda TOTAL do progresso.`);
+            } else {
+                if (confirm("CONFIRMAR RESET TOTAL? Isso APAGARÁ o histórico de ELIMINADOS no Google Sheets e RESTAURARÁ todos os nomes eliminados de volta para a lista de participantes.")) {
+                    
+                    // Chama a API para restaurar a base completa
+                    const resultadoReset = await callApi({ action: 'restaurarBaseCompleta' });
+                    
+                    if (resultadoReset) {
+                        // Limpa o contador diário local
+                        localStorage.removeItem(STORAGE_KEY_ELIMINADOS_DIA); 
+
+                        alert("Base de dados RESTAURADA com sucesso! Todos os nomes eliminados voltaram para a lista de participantes. Recarregue a página.");
+                        window.location.reload(); 
+                    } else {
+                        alert("Falha ao restaurar a base no Google Sheets. Verifique o console.");
+                    }
+                }
+                resetCounter = 0; // Reseta o contador independente do resultado
+            }
+        }
+        
+        function encerrarDia() {
+            if (nomesEliminadosDoDia.length === 0) return;
+
+            if (confirm("Deseja LIMPAR a contagem de eliminados do dia? Isso permitirá mais giros hoje. (O histórico público no Sheets não será afetado).")) {
+                nomesEliminadosDoDia = [];
+                salvarEliminadosDia();
+                checarLimiteDiario();
+                alert("Contagem diária limpa! O limite de giros foi restaurado.");
+                window.location.reload(); 
+            }
+        }
+
+        // =================================================================
+        // 4. FUNÇÃO DE GIRO (COM PUBLICAÇÃO AUTOMÁTICA)
+        // =================================================================
+
+        async function iniciarGiro() {
+            if (isSpinning || nomesRestantes.length === 0 || nomesEliminadosDoDia.length >= LIMITE_DIARIO) return;
+
+            isSpinning = true;
+            btnGirar.disabled = true;
+            displayNome.classList.add('spinning');
+            
+            audioGiro.currentTime = 0; 
+            audioGiro.play().catch(e => console.log("Áudio de giro falhou."));
+
+            const duracaoGiro = 4000; 
+            let startTime = Date.now();
+            
+            const indiceSorteado = Math.floor(Math.random() * nomesRestantes.length);
+            const nomeEliminado = nomesRestantes[indiceSorteado]; 
+            const dataHoje = new Date().toISOString().slice(0, 10);
+            
+            function girar() {
+                const tempoDecorrido = Date.now() - startTime;
+                
+                if (tempoDecorrido < duracaoGiro) {
+                    const nomeAleatorio = nomesRestantes[Math.floor(Math.random() * nomesRestantes.length)];
+                    displayNome.textContent = nomeAleatorio;
+                    requestAnimationFrame(girar);
+                } else {
+                    displayNome.textContent = nomeEliminado; 
+                    displayNome.classList.remove('spinning');
+                    
+                    audioGiro.pause();
+                    audioVitoria.currentTime = 0;
+                    audioVitoria.play().catch(e => console.log("Áudio de parada falhou."));
+
+                    // **********************************************
+                    // 🚨 AÇÃO DE ELIMINAÇÃO NO GOOGLE SHEETS 🚨
+                    // **********************************************
+                    
+                    // 1. Remove da lista local (memória) e prepara para salvar
+                    nomesRestantes.splice(indiceSorteado, 1);
+                    
+                    // 2. Chama a API para adicionar o nome na aba "Eliminados"
+                    const resultadoEliminar = callApi({ action: 'eliminar' }, 'POST', { nome: nomeEliminado, data: dataHoje });
+                    
+                    // 3. Chama a API para sobrescrever a lista restante na aba "NomesRestantes"
+                    const resultadoSalvar = callApi({ action: 'salvarRestantes' }, 'POST', { nomes: nomesRestantes });
+
+                    // Espera as duas chamadas terminarem
+                    Promise.all([resultadoEliminar, resultadoSalvar]).then(() => {
+                        
+                        // Adiciona à lista do dia (temporária para o contador)
+                        nomesEliminadosDoDia.push({ nome: nomeEliminado, data: dataHoje });
+                        salvarEliminadosDia(); // Salva no localStorage (contagem diária)
+
+                        isSpinning = false;
+                        carregarBase(); // Recarrega o status e a lista pública
+                        
+                    }).catch(error => {
+                        displayNome.textContent = "ERRO DE SINCRONIZAÇÃO!";
+                        console.error("Falha ao salvar no Sheets:", error);
+                        isSpinning = false;
+                        btnGirar.disabled = false;
+                    });
+                }
+            }
+            
+            girar();
+        }
+        
+        // =================================================================
+        // 5. PARTÍCULAS DE FUNDO
+        // =================================================================
+        function criarParticulas() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Posição e tamanho aleatórios
+                const size = Math.random() * 3 + 1;
+                const left = Math.random() * 100;
+                const animationDuration = Math.random() * 20 + 10;
+                const animationDelay = Math.random() * 5;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${left}vw`;
+                particle.style.animationDuration = `${animationDuration}s`;
+                particle.style.animationDelay = `${animationDelay}s`;
+                
+                // Cor aleatória entre as cores do tema
+                const colors = ['#ff6e40', '#ffc300', '#5cb85c', '#d9534f'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = randomColor;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarBase();
+            criarParticulas();
+        });
+        
+        btnGirar.addEventListener('click', iniciarGiro);
+        btnReset.addEventListener('click', tentarResetar);
+        btnLimparDiario.addEventListener('click', encerrarDia);
+    </script>
+</body>
+</html>

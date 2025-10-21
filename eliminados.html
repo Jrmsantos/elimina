@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Eliminados - Status dos Participantes</title>
+    <style>
+        :root {
+            --primary: #1e3d59;
+            --secondary: #ff6e40;
+            --accent: #ffc300;
+            --success: #5cb85c;
+            --danger: #d9534f;
+            --dark: #0b1a2b;
+            --light: #f5f5f5;
+            --gray: #334e68;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, #0b1a2b 100%);
+            color: var(--light);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 195, 0, 0.3);
+        }
+        
+        .header p {
+            color: var(--light);
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+        
+        .pesquisa-container {
+            width: 100%;
+            padding: 25px;
+            background: rgba(51, 78, 104, 0.7);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 110, 64, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pesquisa-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .input-pesquisa {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(11, 26, 43, 0.8);
+            color: var(--light);
+            border: 2px solid rgba(255, 110, 64, 0.3);
+        }
+        
+        .input-pesquisa:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(255, 195, 0, 0.3);
+        }
+        
+        .btn-pesquisar {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--success) 0%, #4cae4c 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-pesquisar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-pesquisar:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        
+        .resultado-pesquisa {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(11, 26, 43, 0.8);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-ativo {
+            border-left: 5px solid var(--success);
+        }
+        
+        .status-eliminado {
+            border-left: 5px solid var(--danger);
+        }
+        
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .status-message {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .status-details {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .lista-container {
+            width: 100%;
+            padding: 25px;
+            background: rgba(51, 78, 104, 0.7);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 110, 64, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .lista-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .lista-header h2 {
+            color: var(--accent);
+            font-size: 1.8rem;
+        }
+        
+        .contadores {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .contador {
+            padding: 10px 20px;
+            background: rgba(11, 26, 43, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 110, 64, 0.2);
+        }
+        
+        .contador .numero {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        .lista-eliminados {
+            max-height: 500px;
+            overflow-y: auto;
+            background: rgba(11, 26, 43, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .eliminado-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: rgba(217, 83, 79, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid var(--danger);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .eliminado-nome {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .eliminado-data {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .voltar-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, var(--accent) 0%, #d1a100 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .voltar-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 110, 64, 0.3);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .sem-resultados {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .pesquisa-box {
+                flex-direction: column;
+            }
+            
+            .input-pesquisa {
+                min-width: 100%;
+            }
+            
+            .lista-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .eliminado-item {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .contadores {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .contador {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Status dos Participantes</h1>
+            <p>Verifique se você ainda está no jogo ou foi eliminado</p>
+        </div>
+        
+        <div class="pesquisa-container">
+            <div class="pesquisa-box">
+                <input type="text" class="input-pesquisa" id="inputPesquisa" 
+                       placeholder="Digite seu nome completo..." autocomplete="off">
+                <button class="btn-pesquisar" id="btnPesquisar">🔍 Pesquisar</button>
+            </div>
+            
+            <div class="resultado-pesquisa" id="resultadoPesquisa">
+                <!-- Resultado da pesquisa será inserido aqui -->
+            </div>
+        </div>
+        
+        <div class="lista-container">
+            <div class="lista-header">
+                <h2>📋 Lista de Eliminados</h2>
+                <div class="contadores">
+                    <div class="contador">
+                        <div class="numero" id="totalEliminados">0</div>
+                        <div>Total Eliminados</div>
+                    </div>
+                    <div class="contador">
+                        <div class="numero" id="totalRestantes">0</div>
+                        <div>No Jogo</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lista-eliminados" id="listaEliminados">
+                <div class="loading" id="loadingLista">
+                    <div class="loading-spinner"></div>
+                    <div>Carregando lista de eliminados...</div>
+                </div>
+                <!-- Lista de eliminados será inserida aqui -->
+            </div>
+        </div>
+        
+        <a href="index.html" class="voltar-btn">← Voltar para a Roleta</a>
+    </div>
+
+    <script>
+        // Configurações
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbx1YHaa2VstJenXlQwdeKv_4iQtba7isYLxV6_HTtByJvzHV34uQobgqJMweXYe4i8/exec';
+        
+        // Elementos DOM
+        const inputPesquisa = document.getElementById('inputPesquisa');
+        const btnPesquisar = document.getElementById('btnPesquisar');
+        const resultadoPesquisa = document.getElementById('resultadoPesquisa');
+        const listaEliminados = document.getElementById('listaEliminados');
+        const loadingLista = document.getElementById('loadingLista');
+        const totalEliminados = document.getElementById('totalEliminados');
+        const totalRestantes = document.getElementById('totalRestantes');
+        
+        // Dados
+        let nomesEliminados = [];
+        let nomesRestantes = [];
+        
+        // Função para chamar a API
+        async function callApi(params) {
+            const url = new URL(SHEETS_API_URL);
+            for (let key in params) {
+                url.searchParams.append(key, params[key]);
+            }
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erro de rede');
+                const jsonResponse = await response.json();
+                
+                if (jsonResponse.status === 200) {
+                    return jsonResponse.data;
+                } else {
+                    throw new Error(jsonResponse.message);
+                }
+            } catch (error) {
+                console.error('Erro na API:', error);
+                return null;
+            }
+        }
+        
+        // Carregar dados
+        async function carregarDados() {
+            loadingLista.style.display = 'block';
+            listaEliminados.innerHTML = '';
+            
+            try {
+                // Carrega eliminados
+                const eliminadosData = await callApi({ action: 'carregarEliminados' });
+                if (eliminadosData) {
+                    nomesEliminados = eliminadosData;
+                    totalEliminados.textContent = eliminadosData.length;
+                }
+                
+                // Carrega nomes restantes
+                const restantesData = await callApi({ action: 'carregarNomes' });
+                if (restantesData) {
+                    nomesRestantes = restantesData;
+                    totalRestantes.textContent = restantesData.length;
+                }
+                
+                // Atualiza a lista
+                atualizarListaEliminados();
+                
+            } catch (error) {
+                listaEliminados.innerHTML = `
+                    <div class="sem-resultados">
+                        ❌ Erro ao carregar dados: ${error.message}
+                    </div>
+                `;
+            }
+            
+            loadingLista.style.display = 'none';
+        }
+        
+        // Atualizar lista de eliminados
+        function atualizarListaEliminados() {
+            if (nomesEliminados.length === 0) {
+                listaEliminados.innerHTML = `
+                    <div class="sem-resultados">
+                        🎉 Nenhum participante eliminado ainda!
+                    </div>
+                `;
+                return;
+            }
+            
+            // Ordena por data (mais recentes primeiro)
+            const eliminadosOrdenados = [...nomesEliminados].sort((a, b) => 
+                new Date(b.data) - new Date(a.data)
+            );
+            
+            listaEliminados.innerHTML = eliminadosOrdenados.map((participante, index) => `
+                <div class="eliminado-item">
+                    <div class="eliminado-nome">${participante.nome}</div>
+                    <div class="eliminado-data">Eliminado em: ${formatarData(participante.data)}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Pesquisar participante
+        function pesquisarParticipante() {
+            const nomePesquisa = inputPesquisa.value.trim().toLowerCase();
+            
+            if (!nomePesquisa) {
+                resultadoPesquisa.style.display = 'none';
+                return;
+            }
+            
+            // Procura nos eliminados
+            const eliminado = nomesEliminados.find(p => 
+                p.nome.toLowerCase().includes(nomePesquisa)
+            );
+            
+            // Procura nos participantes ativos
+            const ativo = nomesRestantes.find(nome => 
+                nome.toLowerCase().includes(nomePesquisa)
+            );
+            
+            let resultadoHTML = '';
+            
+            if (eliminado) {
+                resultadoHTML = `
+                    <div class="status-eliminado">
+                        <div class="status-icon">❌</div>
+                        <div class="status-message" style="color: var(--danger);">
+                            ELIMINADO DO JOGO
+                        </div>
+                        <div class="status-details">
+                            <strong>${eliminado.nome}</strong> foi eliminado em ${formatarData(eliminado.data)}
+                        </div>
+                    </div>
+                `;
+            } else if (ativo) {
+                resultadoHTML = `
+                    <div class="status-ativo">
+                        <div class="status-icon">✅</div>
+                        <div class="status-message" style="color: var(--success);">
+                            AINDA NO JOGO!
+                        </div>
+                        <div class="status-details">
+                            <strong>${ativo}</strong> ainda está participando e concorrendo ao prêmio!
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultadoHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div class="status-icon">🔍</div>
+                        <div class="status-message">NOME NÃO ENCONTRADO</div>
+                        <div class="status-details">
+                            O nome "<strong>${inputPesquisa.value}</strong>" não foi encontrado na lista de participantes.<br>
+                            Verifique se digitou corretamente.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultadoPesquisa.innerHTML = resultadoHTML;
+            resultadoPesquisa.style.display = 'block';
+        }
+        
+        // Formatar data
+        function formatarData(dataISO) {
+            try {
+                const date = new Date(dataISO);
+                return date.toLocaleDateString('pt-BR');
+            } catch (e) {
+                return dataISO.substring(0, 10);
+            }
+        }
+        
+        // Event Listeners
+        btnPesquisar.addEventListener('click', pesquisarParticipante);
+        
+        inputPesquisa.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                pesquisarParticipante();
+            }
+        });
+        
+        inputPesquisa.addEventListener('input', () => {
+            if (!inputPesquisa.value.trim()) {
+                resultadoPesquisa.style.display = 'none';
+            }
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', carregarDados);
+        
+        // Atualizar dados a cada 30 segundos
+        setInterval(carregarDados, 30000);
+    </script>
+</body>
+</html>
